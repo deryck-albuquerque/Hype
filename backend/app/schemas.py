@@ -46,6 +46,8 @@ class RequestPublic(BaseModel):
     created_by_id: int
     developer_id: int
     qa_id: int
+    developer_name: str
+    qa_name: str
     created_at: datetime
     updated_at: datetime
 
@@ -65,3 +67,5 @@ class RequestHistoryPublic(BaseModel):
     new_value: str | None
     comment: str | None
     created_at: datetime
+    old_display_value: str | None = None
+    new_display_value: str | None = None
