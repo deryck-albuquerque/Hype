@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { api } from '../lib/api'
-import type { RequestItem } from '../types/request'
+import type { RequestItem } from '../types/requests'
 
 export interface RequestFilterValues {
   status: RequestItem['status'] | ''

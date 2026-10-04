@@ -1,20 +1,102 @@
 services:
   db:
     image: postgres:17
-    container_name: hype-postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: hype
-      POSTGRES_PASSWORD: 12345
-      POSTGRES_DB: hype
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5433:5432"
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hype -d hype"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+        ]
       interval: 5s
       timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: runtime
+    restart: unless-stopped
+    environment:
+      APP_NAME: Hype
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"
+        ]
+      interval: 10s
+      timeout: 5s
       retries: 5
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api/v1
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  tests:
+    profiles:
+      - test
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: test
+    environment:
+      APP_NAME: Hype
+      DATABASE_URL: sqlite+aiosqlite:///:memory
+      JWT_SECRET_KEY: test-only-secret-for-hype-pytest-2026
+      JWT_EXPIRE_MINUTES: 60
+      FRONTEND_ORIGIN: http://localhost
+    command: ["pytest", "-q"]
+
+  seed-po:
+    profiles:
+      - seed
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: runtime
+    environment:
+      APP_NAME: Hype
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES}
+      INITIAL_PO_NAME: ${INITIAL_PO_NAME}
+      INITIAL_PO_EMAIL: ${INITIAL_PO_EMAIL}
+      INITIAL_PO_PASSWORD: ${INITIAL_PO_PASSWORD}
+    depends_on:
+      backend:
+        condition: service_healthy
+    command: ["python", "/app/backend/app/seed_user.py"]
 
 volumes:
   postgres_data:

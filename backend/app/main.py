@@ -11,7 +11,7 @@ from database import Base, engine
 from users import router as users_router
 from requests import router as requests_router
 
-app_name = os.getenv("APP_NAME")
+app_name = "Hype"
 frontend_origin = os.getenv("FRONTEND_ORIGIN")
 
 @asynccontextmanager

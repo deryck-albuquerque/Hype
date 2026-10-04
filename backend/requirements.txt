@@ -5,3 +5,4 @@ asyncpg
 python-dotenv
 pwdlib[argon2]
 PyJWT
+pydantic[email]

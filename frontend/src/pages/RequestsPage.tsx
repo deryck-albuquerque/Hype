@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { api } from '../lib/api'
 import type { AuthUser } from '../types/auth'
-import type { RequestItem } from '../types/request'
+import type { RequestItem } from '../types/requests'
 import { CreateRequestForm } from './CreateRequestForm'
 import { CreateUserForm } from './CreateUserForm'
 import { RequestDetails } from './RequestDetails'
