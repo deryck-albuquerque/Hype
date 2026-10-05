@@ -438,7 +438,7 @@ export function RequestsPage({
                           </div>
                         </div>
 
-                        <p className="mt-3 text-sm leading-6 text-slate-300">
+                        <p className="mt-3 whitespace-pre-line break-words [overflow-wrap:anywhere] text-left text-sm leading-7 text-slate-300">
                           {request.description}
                         </p>
 
