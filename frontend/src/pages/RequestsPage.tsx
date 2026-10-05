@@ -12,6 +12,7 @@ import type { AuthUser } from '../types/auth'
 import type { RequestItem } from '../types/requests'
 import { CreateRequestForm } from './CreateRequestForm'
 import { CreateUserForm } from './CreateUserForm'
+import { ProfilePage } from './ProfilePage'
 import { RequestDetails } from './RequestDetails'
 import {
   RequestFilters,
@@ -21,10 +22,11 @@ import {
 
 interface RequestsPageProps {
   user: AuthUser
+  onUserUpdated: (updatedUser: AuthUser) => void
   onLogout: () => void
 }
 
-type ActiveView = 'requests' | 'create_user' | 'create_request'
+type ActiveView = 'requests' | 'create_user' | 'create_request' | 'profile'
 
 const statusLabels: Record<RequestItem['status'], string> = {
   open: 'Aberta',
@@ -56,7 +58,11 @@ function formatDate(date: string) {
   }).format(new Date(date))
 }
 
-export function RequestsPage({ user, onLogout }: RequestsPageProps) {
+export function RequestsPage({
+  user,
+  onUserUpdated,
+  onLogout,
+}: RequestsPageProps) {
   const [requests, setRequests] = useState<RequestItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -82,14 +88,18 @@ export function RequestsPage({ user, onLogout }: RequestsPageProps) {
       ? `Olá, ${user.name}`
       : activeView === 'create_request'
         ? 'Criar Solicitação'
-        : 'Cadastrar Usuário'
+        : activeView === 'create_user'
+          ? 'Cadastrar Usuário'
+          : 'Meu Perfil'
 
   const pageDescription =
     activeView === 'requests'
       ? `${roleLabel} · Acompanhe suas solicitações por aqui.`
       : activeView === 'create_request'
         ? `${roleLabel} · Crie uma nova solicitação. Somente PO e Tech Lead podem abrir solicitações.`
-        : `${roleLabel} · Crie um perfil Developer ou QA. Somente PO e Tech Lead podem cadastrar usuários.`
+        : activeView === 'create_user'
+          ? `${roleLabel} · Crie um perfil Developer ou QA. Somente PO e Tech Lead podem cadastrar usuários.`
+          : `${roleLabel} · Gerencie seus dados e sua senha.`
 
   const activeFilterCount = Object.values(appliedFilters).filter(
     (value) => value !== '',
@@ -220,6 +230,19 @@ export function RequestsPage({ user, onLogout }: RequestsPageProps) {
               <span>Solicitações</span>
             </button>
 
+            <button
+              type="button"
+              onClick={() => showView('profile')}
+              className={`flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                activeView === 'profile'
+                  ? 'bg-cyan-400/10 text-cyan-300'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              }`}
+            >
+              <UserRound size={18} aria-hidden="true" />
+              <span>Meu Perfil</span>
+            </button>
+
             {isManager && (
               <>
                 <button
@@ -299,6 +322,8 @@ export function RequestsPage({ user, onLogout }: RequestsPageProps) {
                 void loadRequests(appliedFilters)
               }}
             />
+          ) : activeView === 'profile' ? (
+            <ProfilePage user={user} onUserUpdated={onUserUpdated} />
           ) : (
             <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5 sm:p-6">
               <div className="mb-6 flex flex-wrap items-center justify-between gap-3">

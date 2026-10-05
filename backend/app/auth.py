@@ -1,5 +1,4 @@
 import os
-
 from datetime import datetime, timedelta, timezone
 
 import jwt
@@ -11,7 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from models import User
-from schemas import LoginInput, TokenResponse, UserPublic
+from schemas import LoginInput, PasswordChangeInput, TokenResponse, UserPublic
+
 
 jwt_expire_minutes = os.getenv("JWT_EXPIRE_MINUTES")
 jwt_secret_key = os.getenv("JWT_SECRET_KEY")
@@ -23,18 +23,20 @@ JWT_ALGORITHM = "HS256"
 
 
 def create_access_token(user: User) -> str:
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=float(jwt_expire_minutes))
+    expires_at = datetime.now(timezone.utc) + timedelta(
+        minutes=float(jwt_expire_minutes)
+    )
 
     payload = {
         "sub": str(user.id),
         "role": user.role.value,
-        "exp": expires_at,
+        "exp": expires_at
     }
 
     return jwt.encode(
         payload,
         jwt_secret_key,
-        algorithm=JWT_ALGORITHM,
+        algorithm=JWT_ALGORITHM
     )
 
 
@@ -47,17 +49,17 @@ async def login(data: LoginInput, db: AsyncSession = Depends(get_db)) -> TokenRe
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email ou senha incorretos",
-            headers={"WWW-Authenticate": "Bearer"},
+            headers={"WWW-Authenticate": "Bearer"}
         )
 
     return TokenResponse(
         access_token=create_access_token(user),
-        user=UserPublic.model_validate(user),
+        user=UserPublic.model_validate(user)
     )
 
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-    db: AsyncSession = Depends(get_db)) -> User:
+                           db: AsyncSession = Depends(get_db)) -> User:
     token = credentials.credentials
 
     try:
@@ -67,11 +69,16 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(b
             algorithms=[JWT_ALGORITHM],
         )
         user_id = int(payload["sub"])
-    except (jwt.InvalidTokenError, KeyError, TypeError, ValueError):
+    except (
+        jwt.InvalidTokenError,
+        KeyError,
+        TypeError,
+        ValueError,
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido ou expirado",
-            headers={"WWW-Authenticate": "Bearer"},
+            headers={"WWW-Authenticate": "Bearer"}
         )
 
     result = await db.execute(select(User).where(User.id == user_id))
@@ -81,7 +88,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(b
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Usuário não encontrado",
-            headers={"WWW-Authenticate": "Bearer"},
+            headers={"WWW-Authenticate": "Bearer"}
         )
 
     return user
@@ -90,3 +97,31 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(b
 @router.get("/me", response_model=UserPublic)
 async def read_current_user(current_user: User = Depends(get_current_user)) -> User:
     return current_user
+
+
+@router.patch("/me/password")
+async def change_my_password(data: PasswordChangeInput, db: AsyncSession = Depends(get_db),
+                             current_user: User = Depends(get_current_user)) -> dict[str, str]:
+    if not password_hash.verify(
+        data.current_password,
+        current_user.password_hash
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A senha atual está incorreta."
+        )
+
+    if password_hash.verify(
+        data.new_password,
+        current_user.password_hash,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A nova senha deve ser diferente da atual."
+        )
+
+    current_user.password_hash = password_hash.hash(data.new_password)
+
+    await db.commit()
+
+    return {"detail": "Senha alterada com sucesso."}
