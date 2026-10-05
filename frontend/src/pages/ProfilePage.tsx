@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { isAxiosError } from 'axios'
 import { api } from '../lib/api'
 import type { AuthUser } from '../types/auth'
@@ -8,79 +8,90 @@ interface ProfilePageProps {
   onUserUpdated: (updatedUser: AuthUser) => void
 }
 
-interface ApiErrorResponse {
+interface ApiError {
   detail?: string | Array<{ msg?: string }>
 }
 
-const roleLabels: Record<string, string> = {
-  po: 'PO',
-  tech_lead: 'Tech Lead',
-  developer: 'Developer',
-  qa: 'QA',
+type ProfileUpdate = {
+  name?: string
+  email?: string
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
-  if (!isAxiosError<ApiErrorResponse>(error)) {
-    return fallback
-  }
+  if (isAxiosError<ApiError>(error)) {
+    const detail = error.response?.data?.detail
 
-  const detail = error.response?.data?.detail
+    if (typeof detail === 'string') {
+      return detail
+    }
 
-  if (typeof detail === 'string') {
-    return detail
-  }
-
-  if (Array.isArray(detail)) {
-    return detail
-      .map((item) => item.msg)
-      .filter(Boolean)
-      .join(' ')
+    if (Array.isArray(detail)) {
+      return detail.map((item) => item.msg).filter(Boolean).join(' ') || fallback
+    }
   }
 
   return fallback
 }
 
+function formatRole(role: string): string {
+  const labels: Record<string, string> = {
+    po: 'PO',
+    developer: 'Developer',
+    tech_lead: 'Tech Lead',
+    qa: 'QA',
+  }
+
+  return labels[role] ?? role
+}
+
 export function ProfilePage({ user, onUserUpdated }: ProfilePageProps) {
-  const [name, setName] = useState(user.name)
-  const [email, setEmail] = useState(user.email)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
   const [profileError, setProfileError] = useState('')
-  const [profileMessage, setProfileMessage] = useState('')
+  const [profileSuccess, setProfileSuccess] = useState('')
   const [isSavingProfile, setIsSavingProfile] = useState(false)
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
-  const [passwordMessage, setPasswordMessage] = useState('')
-  const [isChangingPassword, setIsChangingPassword] = useState(false)
-
-  const roleLabel = roleLabels[user.role] ?? user.role
-
-  useEffect(() => {
-    setName(user.name)
-    setEmail(user.email)
-  }, [user.name, user.email])
+  const [passwordSuccess, setPasswordSuccess] = useState('')
+  const [isSavingPassword, setIsSavingPassword] = useState(false)
 
   async function handleProfileSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setProfileError('')
-    setProfileMessage('')
+    setProfileSuccess('')
+
+    const updatedName = name.trim()
+    const updatedEmail = email.trim()
+    const payload: ProfileUpdate = {}
+
+    if (updatedName && updatedName !== user.name) {
+      payload.name = updatedName
+    }
+
+    if (updatedEmail && updatedEmail !== user.email) {
+      payload.email = updatedEmail
+    }
+
+    if (!payload.name && !payload.email) {
+      setProfileError('Informe um novo nome ou e-mail para atualizar.')
+      return
+    }
+
     setIsSavingProfile(true)
 
     try {
-      const response = await api.patch<AuthUser>('/users/me', {
-        name,
-        email,
-      })
+      const response = await api.patch<AuthUser>('/users/me', payload)
 
       onUserUpdated(response.data)
-      setProfileMessage('Seus dados foram atualizados.')
-    } catch (requestError) {
+      setName('')
+      setEmail('')
+      setProfileSuccess('Dados atualizados com sucesso.')
+    } catch (error) {
       setProfileError(
-        getErrorMessage(
-          requestError,
-          'Não foi possível atualizar seus dados.',
-        ),
+        getErrorMessage(error, 'Não foi possível atualizar seus dados.'),
       )
     } finally {
       setIsSavingProfile(false)
@@ -90,84 +101,88 @@ export function ProfilePage({ user, onUserUpdated }: ProfilePageProps) {
   async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setPasswordError('')
-    setPasswordMessage('')
+    setPasswordSuccess('')
 
     if (newPassword !== confirmPassword) {
       setPasswordError('A nova senha e a confirmação não são iguais.')
       return
     }
 
-    setIsChangingPassword(true)
+    setIsSavingPassword(true)
 
     try {
-      const response = await api.patch<{ detail: string }>(
-        '/auth/me/password',
-        {
-          current_password: currentPassword,
-          new_password: newPassword,
-        },
-      )
+      await api.patch('/auth/me/password', {
+        current_password: currentPassword,
+        new_password: newPassword,
+      })
 
-      setPasswordMessage(response.data.detail)
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
-    } catch (requestError) {
+      setPasswordSuccess('Senha atualizada com sucesso.')
+    } catch (error) {
       setPasswordError(
-        getErrorMessage(
-          requestError,
-          'Não foi possível alterar a senha.',
-        ),
+        getErrorMessage(error, 'Não foi possível atualizar a senha.'),
       )
     } finally {
-      setIsChangingPassword(false)
+      setIsSavingPassword(false)
     }
   }
 
   return (
-    <div className="grid gap-5 xl:grid-cols-2">
+    <div className="space-y-6">
       <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5 sm:p-6">
-        <div className="mb-6 flex items-center gap-4">
-          <div
-            aria-hidden="true"
-            className="flex size-14 shrink-0 items-center justify-center rounded-full bg-cyan-400/10 text-xl font-semibold text-cyan-300"
-          >
-            {user.name.trim().charAt(0).toUpperCase()}
+        <h2 className="text-lg font-semibold">Dados Do Perfil</h2>
+        <p className="mt-1 text-sm text-slate-400">
+          Confira os dados atuais e atualize seu nome ou e-mail.
+        </p>
+
+        <div className="mt-5 grid gap-4 rounded-xl border border-slate-800 bg-slate-950/60 p-4 sm:grid-cols-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Nome
+            </p>
+            <p className="mt-1 break-words text-sm text-slate-100">{user.name}</p>
           </div>
 
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold">Dados Do Perfil</h2>
-            <p className="mt-1 text-sm text-slate-400">
-              Atualize seu nome e e-mail.
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              E-mail
+            </p>
+            <p className="mt-1 break-words text-sm text-slate-100">
+              {user.email}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Perfil De Acesso
+            </p>
+            <p className="mt-1 text-sm text-slate-100">
+              {formatRole(user.role)}
             </p>
           </div>
         </div>
 
-        <div className="mb-5 rounded-lg border border-slate-800 bg-slate-950 px-4 py-3">
-          <p className="text-xs text-slate-500">Perfil De Acesso</p>
-          <p className="mt-1 text-sm font-medium text-slate-200">
-            {roleLabel}
-          </p>
-        </div>
-
-        <form onSubmit={handleProfileSubmit} className="space-y-4">
+        <form
+          onSubmit={handleProfileSubmit}
+          className="mt-6 grid gap-4 sm:grid-cols-2"
+        >
           <div>
             <label
               htmlFor="profile-name"
               className="mb-2 block text-sm font-medium"
             >
-              Nome
+              Novo Nome
             </label>
             <input
               id="profile-name"
-              name="name"
               type="text"
               autoComplete="name"
-              required
-              minLength={2}
               maxLength={100}
               value={name}
               onChange={(event) => setName(event.target.value)}
+              placeholder={user.name}
               className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 outline-none transition placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
             />
           </div>
@@ -177,62 +192,64 @@ export function ProfilePage({ user, onUserUpdated }: ProfilePageProps) {
               htmlFor="profile-email"
               className="mb-2 block text-sm font-medium"
             >
-              E-mail
+              Novo E-mail
             </label>
             <input
               id="profile-email"
-              name="email"
               type="email"
               autoComplete="email"
-              required
+              maxLength={255}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
+              placeholder={user.email}
               className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 outline-none transition placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
             />
           </div>
 
           {profileError && (
-            <p role="alert" className="text-sm text-red-400">
+            <p role="alert" className="text-sm text-red-400 sm:col-span-2">
               {profileError}
             </p>
           )}
 
-          {profileMessage && (
-            <p role="status" className="text-sm text-emerald-400">
-              {profileMessage}
+          {profileSuccess && (
+            <p role="status" className="text-sm text-emerald-400 sm:col-span-2">
+              {profileSuccess}
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={isSavingProfile}
-            className="rounded-lg bg-cyan-400 px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isSavingProfile ? 'Salvando...' : 'Salvar alterações'}
-          </button>
+          <div className="sm:col-span-2">
+            <button
+              type="submit"
+              disabled={isSavingProfile}
+              className="rounded-lg bg-cyan-400 px-4 py-2 font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSavingProfile ? 'Salvando...' : 'Salvar alterações'}
+            </button>
+          </div>
         </form>
       </section>
 
       <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5 sm:p-6">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold">Alterar Senha</h2>
-          <p className="mt-1 text-sm text-slate-400">
-            Informe sua senha atual e escolha uma nova com pelo menos 8
-            caracteres.
-          </p>
-        </div>
+        <h2 className="text-lg font-semibold">Alterar Senha</h2>
+        <p className="mt-1 text-sm text-slate-400">
+          Informe sua senha atual e escolha uma nova senha com pelo menos 8
+          caracteres.
+        </p>
 
-        <form onSubmit={handlePasswordSubmit} className="space-y-4">
-          <div>
+        <form
+          onSubmit={handlePasswordSubmit}
+          className="mt-5 grid gap-4 sm:grid-cols-2"
+        >
+          <div className="sm:col-span-2">
             <label
               htmlFor="current-password"
               className="mb-2 block text-sm font-medium"
             >
-              Senha Atual
+              Senha atual
             </label>
             <input
               id="current-password"
-              name="current-password"
               type="password"
               autoComplete="current-password"
               required
@@ -252,7 +269,6 @@ export function ProfilePage({ user, onUserUpdated }: ProfilePageProps) {
             </label>
             <input
               id="new-password"
-              name="new-password"
               type="password"
               autoComplete="new-password"
               required
@@ -269,11 +285,10 @@ export function ProfilePage({ user, onUserUpdated }: ProfilePageProps) {
               htmlFor="confirm-password"
               className="mb-2 block text-sm font-medium"
             >
-              Confirme a Nova Senha
+              Confirmar Nova Senha
             </label>
             <input
               id="confirm-password"
-              name="confirm-password"
               type="password"
               autoComplete="new-password"
               required
@@ -286,24 +301,26 @@ export function ProfilePage({ user, onUserUpdated }: ProfilePageProps) {
           </div>
 
           {passwordError && (
-            <p role="alert" className="text-sm text-red-400">
+            <p role="alert" className="text-sm text-red-400 sm:col-span-2">
               {passwordError}
             </p>
           )}
 
-          {passwordMessage && (
-            <p role="status" className="text-sm text-emerald-400">
-              {passwordMessage}
+          {passwordSuccess && (
+            <p role="status" className="text-sm text-emerald-400 sm:col-span-2">
+              {passwordSuccess}
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={isChangingPassword}
-            className="rounded-lg border border-slate-700 px-4 py-2.5 font-semibold text-slate-100 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isChangingPassword ? 'Alterando...' : 'Alterar senha'}
-          </button>
+          <div className="sm:col-span-2">
+            <button
+              type="submit"
+              disabled={isSavingPassword}
+              className="rounded-lg bg-cyan-400 px-4 py-2 font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSavingPassword ? 'Atualizando...' : 'Atualizar senha'}
+            </button>
+          </div>
         </form>
       </section>
     </div>
