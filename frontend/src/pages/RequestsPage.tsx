@@ -148,6 +148,16 @@ export function RequestsPage({
     void loadRequests(appliedFilters)
   }, [loadRequests, appliedFilters])
 
+  useEffect(() => {
+    if (!notice) return
+
+    const timeoutId = window.setTimeout(() => {
+      setNotice('')
+    }, 5000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [notice])
+
   function showView(view: ActiveView) {
     setNotice('')
     setActiveView(view)

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { isAxiosError } from 'axios'
 import { api } from '../lib/api'
 import type { AuthUser } from '../types/auth'
@@ -57,6 +57,26 @@ export function ProfilePage({ user, onUserUpdated }: ProfilePageProps) {
   const [passwordError, setPasswordError] = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState('')
   const [isSavingPassword, setIsSavingPassword] = useState(false)
+
+  useEffect(() => {
+    if (!profileSuccess) return
+
+    const timeoutId = window.setTimeout(() => {
+      setProfileSuccess('')
+    }, 5000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [profileSuccess])
+
+  useEffect(() => {
+    if (!passwordSuccess) return
+
+    const timeoutId = window.setTimeout(() => {
+      setPasswordSuccess('')
+    }, 5000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [passwordSuccess])
 
   async function handleProfileSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

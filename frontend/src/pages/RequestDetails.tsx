@@ -146,6 +146,16 @@ export function RequestDetails({
     setNextStatus(statuses[0] ?? '')
   }, [user.role, request.status])
 
+  useEffect(() => {
+    if (!updateNotice) return
+
+    const timeoutId = window.setTimeout(() => {
+      setUpdateNotice('')
+    }, 5000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [updateNotice])
+
   async function handleStatusUpdate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setUpdateError('')
