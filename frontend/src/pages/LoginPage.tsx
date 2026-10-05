@@ -85,7 +85,13 @@ export function LoginPage() {
   }
 
   if (user) {
-    return <RequestsPage user={user} onLogout={handleLogout} />
+    return (
+      <RequestsPage
+        user={user}
+        onLogout={handleLogout}
+        onUserUpdated={setUser}
+      />
+    )
   }
 
   if (!showLogin) {
