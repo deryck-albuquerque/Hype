@@ -19,7 +19,7 @@ class UserCreate(BaseModel):
     name: str = Field(min_length=2, max_length=100)
     email: EmailStr
     password: str = Field(min_length=5, max_length=128)
-    role: Literal["tech_lead", "developer", "qa"]
+    role: Literal["po", "tech_lead", "developer", "qa"]
 
 
 class UserProfileUpdate(BaseModel):

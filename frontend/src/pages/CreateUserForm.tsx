@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { isAxiosError } from 'axios'
 import { api } from '../lib/api'
 
-type NewUserRole = 'developer' | 'qa'
+type NewUserRole = 'po' | 'tech_lead' | 'developer' | 'qa'
 
 interface CreateUserFormProps {
   onCancel: () => void
@@ -123,6 +123,8 @@ export function CreateUserForm({
             }
             className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 outline-none focus:border-cyan-400"
           >
+            <option value="po">PO</option>
+            <option value="tech_lead">Tech Lead</option>
             <option value="developer">Developer</option>
             <option value="qa">QA</option>
           </select>
