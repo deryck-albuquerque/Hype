@@ -4,7 +4,9 @@ Plataforma para organizar solicitações de desenvolvimento, atribuir responsáv
 
 ## Funcionalidades
 
-- Cadastro de Developers e QAs por usuários PO ou Tech Lead.
+- Login e controle de acesso por perfil: PO, Tech Lead, Developer e QA.
+- Gestão de usuários por PO e Tech Lead: listagem, criação e exclusão.
+- Proteção contra exclusão de usuários vinculados a solicitações ou ao histórico, da própria conta ou do último PO.
 - Criação, atribuição, consulta e exclusão de solicitações.
 - Atualização de status conforme o papel do usuário.
 - Filtros por status, responsável, prioridade e data.
