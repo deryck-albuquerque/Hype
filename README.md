@@ -60,7 +60,6 @@ docker compose --profile test run --rm tests
 
 Os testes usam um banco SQLite temporário e não alteram os dados do PostgreSQL local.
 
----
 
 ## Autor
 
