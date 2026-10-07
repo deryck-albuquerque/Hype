@@ -248,7 +248,7 @@ export function RequestDetails({
       </section>
 
       <section>
-        <h4 className="font-semibold">Atualizar status</h4>
+        <h4 className="font-semibold">Atualizar Status</h4>
 
         {availableStatuses.length === 0 ? (
           <p className="mt-3 text-sm text-slate-400">
@@ -261,7 +261,7 @@ export function RequestDetails({
                 htmlFor={`next-status-${request.id}`}
                 className="mb-2 block text-sm font-medium"
               >
-                Novo status
+                Novo Status
               </label>
 
               <select
@@ -320,7 +320,7 @@ export function RequestDetails({
               disabled={isUpdating}
               className="rounded-lg bg-cyan-400 px-4 py-2 font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:opacity-50"
             >
-              {isUpdating ? 'Atualizando...' : 'Atualizar status'}
+              {isUpdating ? 'Atualizando...' : 'Atualizar Status'}
             </button>
           </form>
         )}
