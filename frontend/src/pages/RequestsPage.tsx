@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
+  LayoutDashboard,
   List,
   Plus,
   SlidersHorizontal,
@@ -13,6 +14,7 @@ import type { AuthUser } from '../types/auth'
 import type { RequestItem } from '../types/requests'
 import { CreateRequestForm } from './CreateRequestForm'
 import { CreateUserForm } from './CreateUserForm'
+import { DashboardPage } from './DashboardPage'
 import { ProfilePage } from './ProfilePage'
 import { RequestDetails } from './RequestDetails'
 import {
@@ -34,7 +36,12 @@ interface ManagedUser {
   role: string
 }
 
-type ActiveView = 'requests' | 'users' | 'create_request' | 'profile'
+type ActiveView =
+  | 'dashboard'
+  | 'requests'
+  | 'users'
+  | 'create_request'
+  | 'profile'
 
 const statusLabels: Record<RequestItem['status'], string> = {
   open: 'Aberta',
@@ -89,7 +96,7 @@ export function RequestsPage({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
-  const [activeView, setActiveView] = useState<ActiveView>('requests')
+  const [activeView, setActiveView] = useState<ActiveView>('dashboard')
   const [expandedRequestId, setExpandedRequestId] = useState<number | null>(null)
   const [requestToDelete, setRequestToDelete] = useState<RequestItem | null>(null)
   const [isDeletingRequest, setIsDeletingRequest] = useState(false)
@@ -111,25 +118,29 @@ export function RequestsPage({
 
   const sectionTitle = isManager
     ? 'Solicitações Da Equipe'
-    : 'Minhas solicitações'
+    : 'Minhas Solicitações'
 
   const pageTitle =
-    activeView === 'requests'
-      ? `Olá, ${user.name}`
-      : activeView === 'create_request'
-        ? 'Criar Solicitação'
-        : activeView === 'users'
-          ? 'Usuários'
-          : 'Meu Perfil'
+    activeView === 'dashboard'
+      ? 'Painel'
+      : activeView === 'requests'
+        ? `Olá, ${user.name}`
+        : activeView === 'create_request'
+          ? 'Criar Solicitação'
+          : activeView === 'users'
+            ? 'Usuários'
+            : 'Meu Perfil'
 
   const pageDescription =
-    activeView === 'requests'
-      ? `${roleLabel} · Acompanhe suas solicitações por aqui.`
-      : activeView === 'create_request'
-        ? `${roleLabel} · Crie uma nova solicitação. Somente PO e Tech Lead podem abrir solicitações.`
-        : activeView === 'users'
-          ? `${roleLabel} · Gerencie os perfis e acessos da equipe.`
-          : `${roleLabel} · Gerencie seus dados e sua senha.`
+    activeView === 'dashboard'
+      ? `${roleLabel} · Acompanhe seus indicadores e solicitações.`
+      : activeView === 'requests'
+        ? `${roleLabel} · Acompanhe suas solicitações por aqui.`
+        : activeView === 'create_request'
+          ? `${roleLabel} · Crie uma nova solicitação. Somente PO e Tech Lead podem abrir solicitações.`
+          : activeView === 'users'
+            ? `${roleLabel} · Gerencie os perfis e acessos da equipe.`
+            : `${roleLabel} · Gerencie seus dados e sua senha.`
 
   const activeFilterCount = Object.values(appliedFilters).filter(
     (value) => value !== '',
@@ -319,6 +330,19 @@ export function RequestsPage({
           <nav className="mt-6 flex gap-2 overflow-x-auto lg:flex-col">
             <button
               type="button"
+              onClick={() => showView('dashboard')}
+              className={`flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                activeView === 'dashboard'
+                  ? 'bg-cyan-400/10 text-cyan-300'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              }`}
+            >
+              <LayoutDashboard size={18} aria-hidden="true" />
+              <span>Painel</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => showView('requests')}
               className={`flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
                 activeView === 'requests'
@@ -407,7 +431,9 @@ export function RequestsPage({
             </p>
           )}
 
-          {activeView === 'users' && isManager ? (
+          {activeView === 'dashboard' ? (
+            <DashboardPage user={user} />
+          ) : activeView === 'users' && isManager ? (
             <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5 sm:p-6">
               <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">

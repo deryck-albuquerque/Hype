@@ -10,6 +10,7 @@ from auth import router as auth_router
 from database import Base, engine
 from users import router as users_router
 from requests import router as requests_router
+from dashboard import router as dashboard_router
 
 app_name = "Hype"
 frontend_origin = os.getenv("FRONTEND_ORIGIN")
@@ -42,6 +43,7 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(users_router, prefix="/api/v1")
 app.include_router(requests_router, prefix="/api/v1")
+app.include_router(dashboard_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["health"])
