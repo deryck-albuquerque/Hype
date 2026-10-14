@@ -493,13 +493,13 @@ export function RequestsPage({
                   setIsProfileMenuOpen((isOpen) => !isOpen)
                   void loadAvatar()
                 }}
-                className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 transition hover:border-slate-700 hover:bg-slate-800"
+                className="flex size-12 items-center justify-center gap-1 rounded-full border border-slate-700 bg-slate-900 p-1 transition hover:border-cyan-700 hover:bg-slate-800"
               >
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
                     alt=""
-                    className="size-10 rounded-full border border-slate-700 object-cover"
+                    className="size-10 rounded-full object-cover"
                   />
                 ) : (
                   <span
@@ -509,20 +509,10 @@ export function RequestsPage({
                     {getInitials(user.name)}
                   </span>
                 )}
-
-                <span className="hidden min-w-0 text-left sm:block">
-                  <span className="block max-w-40 truncate text-sm font-medium text-slate-100">
-                    {user.name}
-                  </span>
-                  <span className="block text-xs text-slate-400">
-                    {roleLabel}
-                  </span>
-                </span>
-
                 <ChevronDown
-                  size={16}
+                  size={13}
                   aria-hidden="true"
-                  className={`text-slate-400 transition ${
+                  className={`absolute -right-1 -bottom-0.5 rounded-full bg-slate-800 text-slate-300 transition ${
                     isProfileMenuOpen ? 'rotate-180' : ''
                   }`}
                 />
@@ -532,13 +522,13 @@ export function RequestsPage({
                 <div
                   role="menu"
                   aria-label="Menu do usuário"
-                  className="absolute right-0 z-40 mt-2 w-56 rounded-xl border border-slate-800 bg-slate-900 p-2 shadow-xl"
+                  className="absolute right-0 z-40 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-800 bg-slate-900 p-2 shadow-xl"
                 >
                   <div className="border-b border-slate-800 px-3 py-2">
-                    <p className="truncate text-sm font-medium text-slate-100">
+                    <p className="line-clamp-2 break-words text-sm font-medium leading-5 text-slate-100">
                       {user.name}
                     </p>
-                    <p className="text-xs text-slate-400">{roleLabel}</p>
+                    <p className="mt-1 text-xs text-slate-400">{roleLabel}</p>
                   </div>
 
                   <button
