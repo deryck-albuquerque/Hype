@@ -483,66 +483,68 @@ export function RequestsPage({
               </p>
             </div>
 
-            <div className="relative shrink-0" ref={profileMenuRef}>
-              <button
-                type="button"
-                aria-label={`Abrir menu do perfil de ${user.name}`}
-                aria-haspopup="menu"
-                aria-expanded={isProfileMenuOpen}
-                onClick={() => {
-                  setIsProfileMenuOpen((isOpen) => !isOpen)
-                  void loadAvatar()
-                }}
-                className="flex size-12 items-center justify-center gap-1 rounded-full border border-slate-700 bg-slate-900 p-1 transition hover:border-cyan-700 hover:bg-slate-800"
-              >
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt=""
-                    className="size-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <span
-                    aria-hidden="true"
-                    className="flex size-10 items-center justify-center rounded-full bg-cyan-950 text-sm font-semibold text-cyan-300"
-                  >
-                    {getInitials(user.name)}
-                  </span>
-                )}
-                <ChevronDown
-                  size={13}
-                  aria-hidden="true"
-                  className={`absolute -right-1 -bottom-0.5 rounded-full bg-slate-800 text-slate-300 transition ${
-                    isProfileMenuOpen ? 'rotate-180' : ''
-                  }`}
-                />
-              </button>
-
-              {isProfileMenuOpen && (
-                <div
-                  role="menu"
-                  aria-label="Menu do usuário"
-                  className="absolute right-0 z-40 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-800 bg-slate-900 p-2 shadow-xl"
+            {activeView !== 'profile' && (
+              <div className="relative shrink-0" ref={profileMenuRef}>
+                <button
+                  type="button"
+                  aria-label={`Abrir menu do perfil de ${user.name}`}
+                  aria-haspopup="menu"
+                  aria-expanded={isProfileMenuOpen}
+                  onClick={() => {
+                    setIsProfileMenuOpen((isOpen) => !isOpen)
+                    void loadAvatar()
+                  }}
+                  className="flex size-12 items-center justify-center gap-1 rounded-full border border-slate-700 bg-slate-900 p-1 transition hover:border-cyan-700 hover:bg-slate-800"
                 >
-                  <div className="border-b border-slate-800 px-3 py-2">
-                    <p className="line-clamp-2 break-words text-sm font-medium leading-5 text-slate-100">
-                      {user.name}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-400">{roleLabel}</p>
-                  </div>
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt=""
+                      className="size-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span
+                      aria-hidden="true"
+                      className="flex size-10 items-center justify-center rounded-full bg-cyan-950 text-sm font-semibold text-cyan-300"
+                    >
+                      {getInitials(user.name)}
+                    </span>
+                  )}
+                  <ChevronDown
+                    size={13}
+                    aria-hidden="true"
+                    className={`absolute -right-1 -bottom-0.5 rounded-full bg-slate-800 text-slate-300 transition ${
+                      isProfileMenuOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
 
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => showView('profile')}
-                    className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-slate-800 hover:text-cyan-300"
+                {isProfileMenuOpen && (
+                  <div
+                    role="menu"
+                    aria-label="Menu do usuário"
+                    className="absolute right-0 z-40 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-800 bg-slate-900 p-2 shadow-xl"
                   >
-                    <UserRound size={16} aria-hidden="true" />
-                    <span>Meu perfil</span>
-                  </button>
-                </div>
-              )}
-            </div>
+                    <div className="border-b border-slate-800 px-3 py-2">
+                      <p className="line-clamp-2 break-words text-sm font-medium leading-5 text-slate-100">
+                        {user.name}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-400">{roleLabel}</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => showView('profile')}
+                      className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-slate-800 hover:text-cyan-300"
+                    >
+                      <UserRound size={16} aria-hidden="true" />
+                      <span>Meu perfil</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </header>
 
           {notice && (
