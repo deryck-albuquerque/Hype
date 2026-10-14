@@ -494,18 +494,18 @@ export function RequestsPage({
                     setIsProfileMenuOpen((isOpen) => !isOpen)
                     void loadAvatar()
                   }}
-                  className="flex size-12 items-center justify-center gap-1 rounded-full border border-slate-700 bg-slate-900 p-1 transition hover:border-cyan-700 hover:bg-slate-800"
+                  className="relative flex size-14 items-center justify-center rounded-full border border-slate-700 bg-slate-900 p-1 transition hover:border-cyan-700 hover:bg-slate-800"
                 >
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
                       alt=""
-                      className="size-10 rounded-full object-cover"
+                      className="size-12 rounded-full object-cover"
                     />
                   ) : (
                     <span
                       aria-hidden="true"
-                      className="flex size-10 items-center justify-center rounded-full bg-cyan-950 text-sm font-semibold text-cyan-300"
+                      className="flex size-12 items-center justify-center rounded-full bg-cyan-950 text-sm font-semibold text-cyan-300"
                     >
                       {getInitials(user.name)}
                     </span>
