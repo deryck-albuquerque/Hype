@@ -32,6 +32,8 @@ services:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      S3_AVATAR_BUCKET: ${S3_AVATAR_BUCKET:-}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:

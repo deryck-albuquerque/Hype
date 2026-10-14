@@ -15,6 +15,10 @@ class UserPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class AvatarResponse(BaseModel):
+    avatar_url: str | None = None
+
+
 class UserCreate(BaseModel):
     name: str = Field(min_length=2, max_length=100)
     email: EmailStr

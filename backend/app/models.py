@@ -39,17 +39,18 @@ class User(Base):
         String(255),
         unique=True,
         index=True,
-        nullable=False,
+        nullable=False
     )
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(
         SqlEnum(
             UserRole,
             name="user_role",
-            values_callable=lambda enum: [item.value for item in enum],
+            values_callable=lambda enum: [item.value for item in enum]
         ),
-        nullable=False,
+        nullable=False
     )
+    avatar_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now()
@@ -66,7 +67,7 @@ class RequestItem(Base):
         SqlEnum(
             Priority,
             name="request_priority",
-            values_callable=lambda enum: [item.value for item in enum],
+            values_callable=lambda enum: [item.value for item in enum]
         ),
         default=Priority.MEDIUM,
         nullable=False
@@ -75,7 +76,7 @@ class RequestItem(Base):
         SqlEnum(
             RequestStatus,
             name="request_status",
-            values_callable=lambda enum: [item.value for item in enum],
+            values_callable=lambda enum: [item.value for item in enum]
         ),
         default=RequestStatus.OPEN,
         nullable=False
