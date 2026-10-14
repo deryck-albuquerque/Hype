@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  ChevronDown,
   LayoutDashboard,
   List,
   Plus,
@@ -34,6 +35,10 @@ interface ManagedUser {
   name: string
   email: string
   role: string
+}
+
+interface AvatarResponse {
+  avatar_url: string | null
 }
 
 type ActiveView =
@@ -71,6 +76,18 @@ function formatDate(date: string) {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(date))
+}
+
+function getInitials(name: string) {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join('')
+
+  return initials || 'U'
 }
 
 function getApiErrorMessage(
@@ -113,6 +130,10 @@ export function RequestsPage({
   const [isDeletingUser, setIsDeletingUser] = useState(false)
   const [deleteUserError, setDeleteUserError] = useState('')
 
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+  const profileMenuRef = useRef<HTMLDivElement>(null)
+
   const isManager = user.role === 'po' || user.role === 'tech_lead'
   const roleLabel = roleLabels[user.role] ?? user.role
 
@@ -145,6 +166,15 @@ export function RequestsPage({
   const activeFilterCount = Object.values(appliedFilters).filter(
     (value) => value !== '',
   ).length
+
+  const loadAvatar = useCallback(async () => {
+    try {
+      const response = await api.get<AvatarResponse>('/users/me/avatar')
+      setAvatarUrl(response.data.avatar_url ?? null)
+    } catch {
+      setAvatarUrl(null)
+    }
+  }, [])
 
   const loadRequests = useCallback(
     async (filters: RequestFilterValues) => {
@@ -204,6 +234,10 @@ export function RequestsPage({
   }, [loadRequests, appliedFilters])
 
   useEffect(() => {
+    void loadAvatar()
+  }, [loadAvatar, user.id, activeView])
+
+  useEffect(() => {
     if (activeView === 'users' && isManager) {
       void loadUsers()
     }
@@ -219,10 +253,36 @@ export function RequestsPage({
     return () => window.clearTimeout(timeoutId)
   }, [notice])
 
+  useEffect(() => {
+    function handlePointerDown(event: PointerEvent) {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileMenuOpen(false)
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsProfileMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
   function showView(view: ActiveView) {
     setNotice('')
     setActiveView(view)
     setIsCreateUserOpen(false)
+    setIsProfileMenuOpen(false)
   }
 
   function applyFilters(filters: RequestFilterValues) {
@@ -415,11 +475,84 @@ export function RequestsPage({
         </aside>
 
         <div className="min-w-0 flex-1 px-4 py-8 sm:px-8 xl:px-10">
-          <header className="mb-8">
-            <h1 className="text-2xl font-bold">{pageTitle}</h1>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-400">
-              {pageDescription}
-            </p>
+          <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">{pageTitle}</h1>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-400">
+                {pageDescription}
+              </p>
+            </div>
+
+            <div className="relative shrink-0" ref={profileMenuRef}>
+              <button
+                type="button"
+                aria-label={`Abrir menu do perfil de ${user.name}`}
+                aria-haspopup="menu"
+                aria-expanded={isProfileMenuOpen}
+                onClick={() => {
+                  setIsProfileMenuOpen((isOpen) => !isOpen)
+                  void loadAvatar()
+                }}
+                className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 transition hover:border-slate-700 hover:bg-slate-800"
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt=""
+                    className="size-10 rounded-full border border-slate-700 object-cover"
+                  />
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className="flex size-10 items-center justify-center rounded-full bg-cyan-950 text-sm font-semibold text-cyan-300"
+                  >
+                    {getInitials(user.name)}
+                  </span>
+                )}
+
+                <span className="hidden min-w-0 text-left sm:block">
+                  <span className="block max-w-40 truncate text-sm font-medium text-slate-100">
+                    {user.name}
+                  </span>
+                  <span className="block text-xs text-slate-400">
+                    {roleLabel}
+                  </span>
+                </span>
+
+                <ChevronDown
+                  size={16}
+                  aria-hidden="true"
+                  className={`text-slate-400 transition ${
+                    isProfileMenuOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+
+              {isProfileMenuOpen && (
+                <div
+                  role="menu"
+                  aria-label="Menu do usuário"
+                  className="absolute right-0 z-40 mt-2 w-56 rounded-xl border border-slate-800 bg-slate-900 p-2 shadow-xl"
+                >
+                  <div className="border-b border-slate-800 px-3 py-2">
+                    <p className="truncate text-sm font-medium text-slate-100">
+                      {user.name}
+                    </p>
+                    <p className="text-xs text-slate-400">{roleLabel}</p>
+                  </div>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => showView('profile')}
+                    className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-slate-800 hover:text-cyan-300"
+                  >
+                    <UserRound size={16} aria-hidden="true" />
+                    <span>Meu perfil</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </header>
 
           {notice && (
